@@ -1,0 +1,132 @@
+---
+title: React Keys
+date: '2023-12-23'
+tags: ['react', 'improvements']
+draft: false
+summary: React keys, examples, pitfalls etc.
+---
+
+<div className="m-0 w-full overflow-hidden plain_image">
+    ![Keys](/static/images/keys/1.jpg)
+</div>
+
+## React keys
+What is **"key"** prop and what is the benefit of using it in arrays of elements?
+- A key is a special attribute you should include when mapping over arrays to render data.
+- Key prop helps React **identify** which items have changed, are added, or are removed.
+- Keys should be **unique** among its siblings. Most often we use ID from our data as key.
+- Using ~indexes~ for keys is not recommended if the order of items may **change**. This can negatively impact performance and may cause issues with component state.
+
+### Rules of keys
+- Keys must be **unique** among siblings. However, it’s okay to use the same keys for JSX nodes in different arrays.
+- Keys should not **change** or be generated while rendering (on the fly) e.g. with `key={Math.random()}` or array `indexes`. This will cause keys to never match up between renders, leading to all your components and DOM being recreated **every** time.
+  Not only is this slow, but it will also lose any user input inside the list items. Instead, use a stable ID based on the data.
+
+Take a close look at the bellow example where we have React component called `ListWithoutKeys` that renders **dynamic list** without `stable key`.
+Instead of stable id, we are using array `index` prop.
+
+```JSX
+import { useState, createElement } from "react";
+
+const dataList = [
+    { type: "li", props: { className: "list_item" }, children: "Item #0" },
+    // ...
+];
+
+const ListWithoutKeys = () => {
+    const [list, setList] = useState(dataList);
+
+    const handleElementUnshift = () =>
+        setList((prevList) => [
+            { ...prevList[0], children: `Item #${prevList.length}` },
+            ...prevList,
+        ]);
+
+    return (
+        <div className="card">
+            <ul>
+                {list.map((el, index) =>
+                    // using index as a `key`
+                    createElement(el.type, { ...el.props, key: index }, el.children)
+                )}
+            </ul>
+            <button onClick={handleElementUnshift}>Add new element to the top</button>
+        </div>
+    );
+};
+```
+<div className="w-full plain_image">
+    ![Indexes](/static/images/keys/2.gif)
+</div>
+As you may see when we are clicking on `Add` button, whole list gets re-rendered, but we added only **one** item. This happened because there are no stable keys, 
+on initial render element with the title `"Item #0"` has `0` value as `key`. And after adding new element to the `list`, 
+React re-render component and element with the title `"Item #0"` now has `1` value as `key`, and React can't identify what exactly changed and re-renders whole list. 
+To fix this, just add stable `key` prop that doesn't changes while rendering.
+
+
+```JSX
+import { useState, createElement } from "react";
+
+// idHub is used only for demonstration
+const dataList = [
+    { type: "li", props: { className: "list_item", key: idHub[0] }, children: "Item #0" },
+    // ...
+];
+
+const ListWithKeys = () => {
+    const [list, setList] = useState(dataList);
+
+    const handleElementUnshift = () =>
+        setList((prevList) => [
+            {
+                ...prevList[0],
+                props: { ...prevList[0].props, key: idHub[prevList.length] },
+                children: `Item #${prevList.length}`,
+            },
+            ...prevList,
+        ]);
+
+    return (
+        <div className="card">
+            <ul>{list.map((el) => createElement(el.type, el.props, el.children))}</ul>
+            <button onClick={handleElementUnshift}>Add new element to the top</button>
+        </div>
+    );
+};
+```
+<div className="w-full plain_image">
+    ![Unique_Keys](/static/images/keys/3.gif)
+</div>
+
+As you may see **only newly added element re-rendered**, React is smart enough to figure out what changed.
+
+### Why does React need keys?
+Imagine that files on your desktop didn’t have names.
+Instead, you’d refer to them by their order — the first file, the second file, and so on.
+You could get used to it, but once you delete a file, it would get confusing.
+The second file would become the first file, the third file would be the second file, and so on.
+
+Keys helps React uniquely identify an item between its siblings.
+When the position of the element changes, `key` lets React identify what happen with this item between re-rendering.
+
+#### Here is a small example what could happen when using list without `key` property in React.
+1. Write something inside input
+2. Try to remove remove first input.<br /> - See what happen? Doesn't matter which input you are trying to remove. From `view` always gonna be removed last one in the list.
+3. Add `key={item.id}` property to the list and try again. See? Works just fine.<br />
+
+<iframe
+  loading="lazy"
+  src="https://codesandbox.io/embed/zqgjj7?view=split+%2B+Preview&module=%2Fsrc%2FApp.tsx&hidenavigation=1&hidedevtools=1&fontsize=10&runonclick=1"
+  className="w-full max-w-full rounded-t-none bg-white opacity-100 transition-opacity duration-150 sm:rounded-lg md:shadow-md"
+  style={{
+    width: '100%',
+    height: '400px',
+    border: 0,
+    borderRadius: '4px',
+    overflow: 'hidden',
+    zIndex: -1,
+  }}
+  title="icy-forest"
+  allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
+  sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+></iframe>

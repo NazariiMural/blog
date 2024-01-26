@@ -1,0 +1,94 @@
+---
+title: Rules of hooks
+date: '2023-12-30'
+tags: ['react', 'improvements']
+authors: ['default']
+draft: false
+summary: Why can't we use hooks conditionally? How do hooks work? Where is data stored? What is React Fiber? We are gonna try to answer on all those questions together. 
+---
+
+
+## Prerequisites 
+In this short post about react hooks we are going to start from **Conclusion** 🎉🎉🎉
+
+### Conclusion
+1. **What are hooks?**<br />
+    React hooks allow usage of different React features inside functional components.
+2. **Where is components data stored?**<br />
+    All components data (`next prev states`, `props`...) are stored inside `FiberNode` instance.
+3. **Why can't we use hooks conditionally?**<br />
+    React stores hooks execution **order** inside similar to the Linked List Data Structure where one hook has a `pointer` to the `next` one.
+    And this _data structure_ lives inside `Fiber tree` thought re-renders.<br />
+    If the order of the hook execution is different between re-renders - **nodes inside `FiberNode` structure lose a pointer and points to the totally different thing and whole structure simply can't work properly anymore.**
+
+<div className="w-full overflow-hidden">
+    ![Hooks](/static/images/hooks/hooks.jpg)
+</div>
+
+### What are hooks?
+Hooks let you use different React features from your functional components, you can use:
+
+- built-in hooks: `use`, `useReducer`, `useRef`, `useContext`...
+- or you can build your own
+
+### Where is data stored?
+**Shortly:** _All components data (next, prev `states`, `props`...) are stored inside FiberNode._<br />
+
+**Verbosely:**<br />
+When we are building our React app, we are using **components**. Components are independent and reusable bits of code.
+Based on those components React is going to build **virtual tree** - this tree is called the `fiber tree`.<br />
+
+**Fiber Tree** keeps track of all information about `components` through re-render. 
+Fiber Tree consist of nodes called - `FiberNode`.
+
+**FiberNode** keeps track of all information about single react component: `state`, `props`, `owner` and so on.
+For example we are using several `useState` hooks inside our component. When React computes Fiber Tree, 
+React will write that default values of the each individual `useState` hook and the order they're called **inside** `FiberNode`.<br />
+Let's take a look at the small component example:
+
+```jsx harmony
+function App() {
+    const [count, setCount] = useState<number>(0);
+    const [name, setName] = useState<string>("John");
+
+    return (
+        <div className="card">
+            <button onClick={() => setCount((c) => ++c)}>
+                Count is {count}
+            </button>
+            <hr />
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+    );
+}
+
+export default App;
+```
+In this example we have two peaces of state with default value: `count="0"` and `name="John"`;
+Now take a look how this sate is going to be represented inside `FiberNode`
+![Hooks](/static/images/hooks/hooks_1.png)
+As you can see order of the hooks execution strictly the same as its in our component above, 
+and one useState has a pointer to another one `FiberNode -> memoizedState -> next ->`. You may already guess where I'm going with it. 
+
+So what happens after re-render? React is going to execute app and to pass the values that were `kept in memory` inside the `FiberNode`. <br />
+So the first state `const [count, setCount] = useState<number>(0);` is going to be reading - into the **first element** of the linked list 
+and the second state `const [name, setName] = useState<string>("John");` is going to be reading - into the **second element** of the linked list (into the property `.next` of the first one). <br />
+What if at the next render you add or remove a hook, in that case you change the order of the hooks execution and one or more of your hooks are going to point to the **irrelevant** data, to the data that is not related to that hook.
+
+### Why can't we use hooks conditionally?
+<div className="flex justify-center plain_image">
+    ![Why](/static/images/hooks/why.gif)
+</div>
+React has to keep track of stuff for you in between renders.<br />
+Hooks rely on the **order** in which they're called. **They are all interdependent in their linked lists**. This is why you can't use them conditionally.
+
+### What does React Fiber solve?
+When the re-render happens, React knows which elements should be rendered, and which information should be updated in the DOM etc.<br />
+- Fiber can mark `state updates` in React with different levels of **priority**.<br />
+- Fiber breaks the computation of the component tree into nodes, or `'units' of work` that it can commit at any time.<br />
+- Fiber allows React to: **pause, resume or restart computation for various components**.
+
+### Rules of hooks
+🔴 Do not call Hooks inside conditions or loops.<br />
+🔴 Do not call Hooks after a conditional `return` statement.<br />
+🔴 Do not call Hooks in event handlers.<br />

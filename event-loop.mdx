@@ -1,0 +1,234 @@
+---
+title: Node.js EventLoop, Timers, Promises, Queues.
+date: '2024-01-05'
+lastmod: '2024-01-08'
+tags: ['node.js']
+draft: false
+summary: In this post we will take a look at the Node.js EventLoop, process.nextTick, setImmediate.
+---
+
+### Node.js
+Node.js is an event-based platform. This means that everything that happens in Node is the reaction to an event.<br />
+Below diagram denotes a simplified version of Node.js architecture.
+
+<div className="plain_image w-full overflow-hidden">
+  ![Node.js](/static/images/event_loop/node.webp)
+</div>
+
+### libuv
+libuv is an open-source library written in C.
+libuv can delegate I/O operations to the OS Kernel, which of course can be multi-threaded.
+Because of that, Node.js can perform I/O operations in a non-blocking way.
+When an I/O operation is ended by the OS, it notifies the Event Loop to add an appropriate callback to the queue and Node.js finally executes it.
+Operating systems provide multi-threaded `interfaces` for many I/O tasks, but not for all that libuv needed.
+Whenever possible, libuv will use those multi-threaded interfaces, but there are few tasks that requires using of internal libuv's thread pool.
+
+### libuv Thread pool
+**Why?**
+Unlike network I/O, when there are no platform-specific asynchronous interfaces for `blocking I/O operations` libuv must run those operations inside thread pool.
+These are the Node.js module APIs that make use of this Worker Pool:
+- File system operations
+- DNS lookup
+- Crypto: `crypto.pbkdf2()`, `crypto.scrypt()`, `crypto.randomBytes()`, `crypto.randomFill()`, `crypto.generateKeyPair()`
+- Zlib: All zlib APIs
+
+**Thread pool** default size is 4, but it can be changed at startup time by setting the `UV_THREADPOOL_SIZE` environment variable to any value (the absolute maximum is 1024).
+
+### V8
+V8 is Google’s open source JavaScript engine, written in C++. V8 directly translates JavaScript code into efficient machine code using JIT (Just-In-Time) compiler instead of using an interpreter.
+
+### Event Loop
+The Event Loop lives inside libuv and it allows Node.js to perform non-blocking I/O operations, by offloading operations to the system kernel whenever possible.
+The Event Loop will go through a `phase`, execute the callbacks related to that `phase`, and then move to the next one.<br />
+Each `phase` has a callback queue. Depending on the task, it will send it to the corresponding queue.
+Between each run of the **Event Loop**, Node.js checks if it is waiting for any asynchronous I/O or timers and shuts down cleanly if there are not any.
+
+### Event Loop: Phases
+`timers:` Executes callbacks scheduled by `setTimeout()` and `setInterval()`.<br />
+`pending callbacks:` Executes callbacks for some system operations e.g. TCP errors.<br />
+`idle, prepare:` Only used internally in Libuv.<br />
+`poll:` Event Loop Retrieve new I/O events, execute I/O related callbacks (almost all with the exception of close callbacks, the ones scheduled by `timers`, and `setImmediate()`).<br />
+`check:` Execute `setImmediate()` callbacks.<br />
+`close callbacks:` Execute `close` callbacks, e.g. `socket.on('close', ...)`.<br />
+
+```
+   ┌───────────────────────────┐
+┌─>│           timers          │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+│  │     pending callbacks     │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+│  │       idle, prepare       │
+│  └─────────────┬─────────────┘      ┌───────────────┐
+│  ┌─────────────┴─────────────┐      │   incoming:   │
+│  │           poll            │<─────┤  connections, │
+│  └─────────────┬─────────────┘      │   data, etc.  │
+│  ┌─────────────┴─────────────┐      └───────────────┘
+│  │           check           │
+│  └─────────────┬─────────────┘
+│  ┌─────────────┴─────────────┐
+└──┤      close callbacks      │
+   └───────────────────────────┘
+```
+
+### Event Loop: Phases: In Detail
+Each phase is a queue, so callbacks are executed in FIFO order.
+If Event loop in working inside some phase, it will execute callbacks until current queue is **empty** or the maximum number of callbacks are reached. And only after that event loop will move to the next phase.
+Event loop offload operation to the system kernel (most kernels are multi-threaded) `->` operation completes `->` kernel tells Node.js so that the appropriate callback may be added to the `poll` queue
+
+#### timers
+
+A timer specifies **approximate** number of milliseconds after which a provided callback may be executed - **not the exact time.**
+
+#### poll queue
+1. First when Event Loop inside poll queue it first checks if there are any **immediate callbacks**, if yes - then Event Loop proceeds to the `check phase`.
+2. Poll queue is empty:
+   - The poll phase waits for any pending I/O events to complete, then executes their callbacks immediately.
+   - When the poll phase becomes idle and there is a callback that has been scheduled with using `setImmediate()`, the Event Loop will enter the `check phase` instead of waiting for new I/O events.
+3. Poll queue isn't empty:
+   - Event Loop will execute each callback inside the queue - synchronously, until either the queue is empty, or the system-dependent hard limit is reached.
+
+#### check
+In this phase, callbacks scheduled using `setImmediate()` is executed - not the timer phase.
+
+#### `setImmediate()`
+The main advantage to using `setImmediate()` over `setTimeout()` is `setImmediate()` will always be executed before any timers if scheduled within an I/O cycle,
+no matter of how many timers are present.
+
+```javascript
+/**
+ * Order of this block depend on system workload, could be different for every execution
+ */
+setImmediate(() => console.log('Immediate'))
+setTimeout(() => console.log('Timeout'))
+```
+<div className="plain_image w-full overflow-hidden">
+  ![setImmediate_setTimeout](/static/images/event_loop/setImmediate_setTimeout_1.png)
+</div>
+```javascript
+/**
+ * In the below examples setImmediate always gonna be executed before setTimeout
+ */
+
+// Example #1
+setTimeout(() => {
+  // setTimeout inside I/O cycle always gonna be executed after setImmediate
+  setTimeout(() => console.log('timeout #1'));
+  // setImmediate inside callbacks always gonna be executed before setTimeout
+  setImmediate(() => console.log('immediate #1'));
+});
+
+// Example #2
+fs.readFile('./big.db', () => {
+  setTimeout(() => console.log('timeout #2'));
+  // Gonna be executed before setTimeout always!!!
+  setImmediate(() => console.log('immediate #2'));
+});
+```
+<div className="plain_image w-full overflow-hidden">
+  ![setImmediate_setTimeout_2](/static/images/event_loop/setImmediate_setTimeout_2.png)
+</div>
+
+#### `process.nextTick()`
+Every time the event loop takes a full trip, we call it a **tick**.
+Callback that was passed to `process.nextTick()`, gonna be executed **right after** the current operation ends - regardless of the current phase of the Event Loop.
+_Using `process.nextTick()` helps process a function asynchronously as soon as possible._
+
+```javascript
+setImmediate(() => console.log('Immediate'));
+setTimeout(() => console.log('Timeout'));
+Promise.resolve().then(() => console.log('Promise'));
+process.nextTick(() => console.log('process.nextTick'));
+```
+<div className="plain_image w-full overflow-hidden">
+  ![setImmediate_setTimeout_3](/static/images/event_loop/setImmediate_setTimeout_3.png)
+</div>
+
+### Microtask, Macrotask queues and process.nextTick queue
+What the differences between `setImmediate`, `setTimeout(cb, 0)`, `process.nextTick()`vs `Promise.then()`?<br />
+1. Callback passed to the `process.nextTick()` will always be executed before `setTimeout` and `setImmediate`, because it gonna be executed **right after** the current operation ends - **in the current iteration** of the Event Loop.
+2. Callback passed to the `setImmediate()` will be executed **in the next iteration** of the Event Loop.
+3. Callback with a 0ms delay in `setTimeout()` is very similar to `setImmediate()`. The execution order will depend on different factors, but they will be both run in the **next iteration** of the Event Loop.
+
+<div className="plain_image w-full overflow-hidden">
+  ![event_loop](/static/images/event_loop/event_loop.png)
+</div>
+
+
+To what queues does each callback belong to?
+
+- A `Promise.then()` callback is added to promises **microtask** queue.
+- A `process.nextTick` callback is added to **process.nextTick queue**.
+- A `setTimeout`, callback is added to **timers** queue. 
+- A `setImmediate`, callback is added to **check** queue.
+
+**Order of execution:**<br />
+Event loop executes tasks in next order: **microtask queue** `->` **process.nextTick queue** `->` **check queue**  `->` **timers queue**.
+
+### Examples
+```javascript
+const run = () => {
+    console.log("start");                                             // 1
+    
+    setTimeout(() => console.log("Timeout"));                         // 6
+    setImmediate(() => console.log("Immediate"));                     // 5 
+
+    new Promise((resolve) => {
+        resolve("Promise");
+    }).then((text) => {
+      process.nextTick(() => console.log("process.nextTick #0"));     // 4
+      console.log(text);                                              // 2                                       
+    });
+
+    process.nextTick(() => console.log("process.nextTick #1"));       // 3
+};
+run();
+// start, Promise, process.nextTick #1, process.nextTick #0, Immediate, Timeout
+```
+Work is gonna look like this:
+1. event Loop will first call `console.log("start")`
+2. adds cb from `setTimeout` to the timers queue
+3. adds cb from `setImmediate` to the check queue
+4. execute body of the `new Promise()` synchronously
+5. adds cb from `new Promise` to the microtask queue
+6. adds cb from `process.nextTick(#1);` to the process.nextTick queue
+5. execute microtask queue `promiseCallback` - remember it has **highest** priority
+6. adds cb from `process.nextTick(#0);` to the process.nextTick queue
+7. since microtask queue is empty execute process.nextTick queue in FIFO order: `nextTickCallback(#1)`, `nextTickCallback(#0)`
+8. execute check queue`immediateCallback`
+
+Starting with node `v11`, `nextTick queue` callbacks and `microtasks` will run between each individual `setTimeout` and `setImmediate` callbacks, even if the timers queue or the check queue is not empty. Check example bellow.
+This was done to improve the performance of promise-related code as promises became more of a central part of the Node.js architecture for asynchronous operations.
+
+```javascript
+setImmediate(() => console.log('timeout1'));            // 1
+setImmediate(() => {
+    console.log('timeout2')                             // 2
+    process.nextTick(() => console.log('next tick'))    // 3  
+});
+setImmediate(() => console.log('timeout3'));            // 4
+setImmediate(() => console.log('timeout4'));            // 5
+
+// timeout1, timeout2, next tick, timeout3, timeout4
+```
+
+Promises have their own special treatment. **Microtask queue** run a lot more often that other queues event compared to the **nextTick queue**. Check example below:
+
+```javascript
+process.nextTick(() => console.log(1));                 // 5
+Promise.resolve().then(() => console.log(2));           // 1
+Promise.resolve()
+    .then(() => {
+        console.log(3);                                 // 2
+        process.nextTick(() => console.log(4));         // 6
+        Promise.resolve().then(() => console.log(5));   // 3
+    })
+    .then(() => {
+        console.log(6);                                 // 4
+    });
+
+// 2, 3, 5, 6, 1, 4
+```
+
+<h3>Thank you for reading, I really hope that this post was useful for you.</h3>
