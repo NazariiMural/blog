@@ -1,0 +1,110 @@
+---
+title: Git Cheat Sheet
+date: '2024-01-02'
+lastmod: '2024-01-02'
+tags: ['git']
+draft: false
+images: ['/static/images/git/0.png']
+summary: Git cheat sheet that serves as a quick reference for basic Git commands to help you learn Git. Git branches, remote repositories, undoing changes, and more.
+---
+
+<div className="plain_image w-full overflow-hidden">
+    ![Git](/static/images/git/0.png)
+</div>
+
+### Config
+To show configurations list:<br />
+`git config --list`<br />
+To modify something:<br />
+`git config --global user.name "Nazarii"`<br />
+
+### Setup
+Initialize an existing directory as a Git repository<br />
+`git init`<br />
+Clone an entire repository from a hosted location via URL<br />
+`git clone [url]`<br />
+
+### Stage
+Add all files to the _'staging':_<br />
+`git add .`<br />
+But **better** to add specific files:<br />
+`git add test.md`<br />
+
+### Commit
+To commit files (add snapshot)<br />
+`git commit -m "Initial commit"`<br />
+Add and commit:<br />
+`git commit -a-m "Initial commit"`<br />
+See last commits:<br />
+`git log`<br />
+Modify message:<br />
+`git commit --amend -m "New message"`<br />
+Modify commit:<br />
+**Example:** You created commit, but forgot about some peace of _your-best-code_`while (true) {}`😎.
+Then just add new logic to some file, and after that use `git add .` and add this changes to the commit with the next command:<br />
+`git commit --amend --no-edit`<br />
+
+### Remote
+To see remote:<br />
+`git remote -v`<br />
+To connect local code to the cloud:<br />
+`git remote add origin <URL>`<br />
+To see additional info:<br />
+`git remote show origin`<br />
+
+### Push
+To push and set upstream remote:<br />
+`git push origin master -u`<br />
+
+### Merge
+Fetch remote state:<br />
+`git fetch`<br />
+Merge remote branch with local branch:<br />
+`git merge origin/master`<br />
+Go to original state before merge conflict was started:<br />
+`git merge --abort`<br />
+
+### Pull
+Combine `fetch` and `merge` commands:<br />
+`git pull origin master`<br />
+
+
+### Branch
+See all branches:<br />
+`git branch`<br />
+Rename current:<br />
+`git branch -M main`<br />
+Create new:<br />
+`git branch feature_1`<br />
+Delete branch `-d` soft, `-D` hard:<br />
+`git branch -d feature_1`<br />
+Create and checkout:<br />
+`git checkout -b production`<br />
+Go to previous branch:<br />
+`git checkout -`<br />
+
+### Reset
+Remove files from _'staging'_:<br />
+`git reset`<br />
+**Example:** Create new file bad.go -> stage it `git add bad.go` -> commit it `git commit -m "Add Bad file"`. After that you can reset this commit:<br />
+`git reset <COMMIT_ID>`<br />
+Reset and **delete** unwanted files:<br />
+`git reset --hard <COMMIT_ID>`<br />
+Safer way of doing this is by using `revert` - to **revert** changes, but leave `bad commit` in commit history:<br />
+`git revert <COMMIT_ID>`<br />
+
+### Stash
+Hide you local not commit changes:<br />
+`git stash save <NAME_OF_THE_STASHED_WORK>`<br />
+Get back stashed changes:<br />
+`git stash pop`<br />
+To see stashed list:<br />
+`git stash list`<br />
+Apply stash:<br />
+`git stash apply <INDEX_IN_STASH_LIST>`<br />
+
+
+### Rebase
+Rebase can help you to keep your feature branch with the master branch, without merge commits<br />
+To get new updates from another branch and put your commit on a top - use: `rebase`**<br />
+`git rebase master`<br />

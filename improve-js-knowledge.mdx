@@ -1,0 +1,469 @@
+---
+title: Interesting topics of the JS land.
+date: '2024-01-23'
+lastmod: '2024-01-23'
+tags: ['javascript', 'improvements']
+draft: false
+summary: This post contains interesting TS/JS questions (and answers) that probably every developer asked yourself several times. Why this peace of code runs before that one? Why this expression is so weird etc.?
+---
+
+### Why this post exist?
+This post was created to collect cool topics of the JS land, that sometimes may be crucial to remember, and sometimes are just funny to know about.
+Briefly, this post it's a collection of the 'JS moments' - that we as developers don't see very often, but understanding them may be very helpful.    
+Most of the topics gonna be something like: _guess the output_ or _why it does'n work_.
+
+### EventLoop execution order: `promises`, `queueMicrotask`.
+<p className="m-0">Guess the output order.</p>
+```javascript
+Promise.resolve().then(() => console.log(1));
+
+queueMicrotask(() => console.log(2));
+
+setTimeout(() => {
+    console.log(3);
+}, 0);
+
+console.log(4);
+
+new Promise(() => {
+    console.log(5);
+});
+
+(async () => console.log(6))();
+```
+<details>
+    <summary>**Answer**</summary>
+
+<p className="mx-0 my-1 font-bold">4, 5, 6, 1, 2, 3</p>
+<p className="mx-0 my-0">Explanation:</p>
+1. `console.log(4);` - that is a synchronous function call.
+2. Body of the `new Promise()` always runs synchronously.
+3. Immediately invoked function expression **IIFE**:
+    <Callout size="xs">
+        <p className="p-0 m-0 tracking-tight leading-tight">All code after `await` statement considered as `microtask`, until that code considered as **synchronous** code.</p>
+    </Callout>
+
+    ```javascript
+    (async () => console.log(1))();
+    new Promise(() => console.log(2));
+    console.log(3);
+    // 1, 2, 3
+    ```
+4. Since call stack is empty now, EventLoop can process queues: microtask and after macrotask. 
+And first item in microtask queue is resolved promise: `then(() => console.log(1)`.
+5. Next `queueMicrotask(() => console.log(2));` - based on name it's obvious from what queue this callback came to call stack.
+6. Since callstack is empty and nothing else in microtask queue, EventLoop will process macrotask queue: `setTimeout(() => console.log(3), 0);`
+<Divider />
+</details>
+
+### Which of the following are not considered microtask in JavaScript's EventLoop?
+a. `Script` loading<br />
+b. `setTimeout` callback<br />
+c. `mousemove` event<br />
+d. `requestAnimationFrame` callback<br />
+e. UI rendering<br />
+f. `then` callback<br />
+g. `new Promise` execution function<br />
+h. `fetch` calls<br />
+
+<details>
+    <summary>**Answer**</summary>
+<p className="mx-0 my-1">All of them except `then` callback. Only `then`callback will be added to the `microtask` queue.</p>
+<Divider />
+</details>
+
+### EventLoop execution order: `promises`, `async/await`.
+<p className="m-0">What value will be last one?</p>
+```javascript showLineNumbers
+async function asyncFunction() {
+    console.log(1);
+    new Promise(() => console.log(2));
+    await new Promise((res) => {
+        setTimeout(() => console.log(3), 0);
+        res();
+    });
+}
+
+new Promise((res) => {
+    console.log(4);
+    (async () => {
+        console.log(5);
+        await asyncFunction()
+        console.log(6);
+    })();
+    res();
+}).then(() => console.log(7));
+
+console.log(8);
+```
+<details>
+    <summary>**Answer**</summary>
+<p className="mx-0 my-1 font-bold">4, 5, 1, 2, 8, 6, 7, 3</p>
+<p className="mx-0 my-1">So, What exactly happened?</p>
+<Image
+    webpAnimated
+    alt="aaa_so_what"
+    src="/static/images/improve-js-knowledge/aaa_so_what.webp"
+    className="m-0 w-full h-56 sm:w-3/5 sm:h-72 mx-auto"
+    width={480}
+    height={400}
+/>
+1. `new Promise` pushed to the call stack.
+2. First thing in its body is: `console.log(4);` pushed to the callstack, executed, popped out.
+3. After that we have IIFE `async () => `:
+    - this body runs synchronously till the `await` moment. `console.log(5);` -> to stack, executed, popped.
+4. `asyncFunction` - pushed to stack.
+5. `console.log(1);` - to stack, executed, popped.
+6. `new Promise(() => console.log(2));` - to stack, executed, popped.
+7. `await new Promise((res)`- pushed to stack.
+    - `setTimeout(() => console.log(3), 0)` - to stack, to the web timer api, and on the NextTick of EventLoop to the **macrotask queue**.
+8. Body of `asyncFunction` executed, pushed to the its queues - we are still **awaiting** and `asyncFunction` itself pushed to the **microtask queue** and EventLoop will execute, rest of the code.
+9. `res();` pushed to the stack, `await new Promise` popped out from stack.
+10. `then(() => console.log(7));` - to stack and its callback `console.log(7)` to the **microtask queue**.
+11. `console.log(8);` - to stack, executed, popped.
+12. Now callstack is empty: EventLoop will start to pop out from queues.
+13. `asyncFunction` from the **microtask queue** - implicit `return undefined`.
+14. Since `asyncFunction` executed completely, **rest** of `(async () => {` can be pushed to **microtask queue** - `console.log(6);` to the microtask queue.
+15.  `console.log(7)` - to stack, executed, popped.
+16. Rest of the `(async () => {` to the stack -> `console.log(6);` - to stack, executed, popped.
+17. `() => console.log(3)` - to stack, executed, popped.
+
+{/* <Video className="m-0 h-72 w-full mx-auto" src="/static/images/improve-js-knowledge/event_loop_hard_question.mp4" /> */}
+<Divider />
+</details>
+
+### EventLoop execution order: `async`, `Promise.all`.
+<p className="m-0">What value will be first one?</p>
+```javascript showLineNumbers
+(async () => {
+    const asyncFunc = async () => "asyncFunc";
+
+    const promise = new Promise(() => {
+        console.log("promise");
+    }).then(() => console.log("then"));
+
+    console.log("asyncBody");
+
+    queueMicrotask(() => {
+        console.log("queueMicrotask");
+    });
+
+    const results = await Promise.all([asyncFunc(), promise]);
+
+    return results;
+})();
+
+console.log("script");
+```
+<details>
+    <summary>**Answer**</summary>
+<p className="mx-0 my-1 font-bold">`promise`, `asyncBody`, `script`, `queueMicrotask`</p>
+<p className="mx-0 my-1">Why, there is no `then` from the line 6? 
+Because `new Promise` defined on line 4, was never resolved - it's remained in `pending` state.</p>
+<Callout size="xs">
+<p className="m-0">Promise three states:</p>
+<ul className="m-0">
+    <li className="m-0">`pending` initial state, neither fulfilled nor rejected.</li>
+    <li className="m-0">`fulfilled` operation was completed successfully.</li>
+    <li className="m-0">`rejected` operation failed.</li>
+</ul>
+</Callout>
+</details>
+
+### Scopes and Closures
+<p className="m-0">There are three types of scopes in JavaScript: `Global`, `Block`, `Function`</p>
+```javascript
+const name = "John" ;        // Global Scope
+{
+    const name = "John";     // Block Scope
+}
+function foo() {
+    const name = "John";     // Function Scope 
+}
+```
+<p className="m-0">When one function defined inside another - inner function has the access to the outer function's scope. 
+JavaScript **closure** it is the combination of a function and references to its the lexical environment. 
+In JavaScript, closures are created every time a function is created, at function creation time.</p>
+
+<p className="m-0 font-bold">What is the output?</p>
+
+```javascript showLineNumbers
+function createCounter() {
+    let global = 0;
+    function incrementCounter() {
+        const incremented = ++global;
+        return incremented;
+    }
+    return { incrementCounter };
+}
+
+const counter = createCounter();
+
+console.log(counter.incrementCounter());
+console.log(counter.incrementCounter());
+console.log(createCounter().incrementCounter());
+```
+<details>
+    <summary>**Answer**</summary>
+<p className="mx-0 my-1 font-bold">`1`, `2`, `1`</p>
+<Divider />
+</details>
+
+<p className="m-0 font-bold">Are these objects are equal?</p>
+```javascript showLineNumbers
+function userFactory() {
+    let user = { name: "", createAt: Date.now() };
+
+    return (name) => {
+        "use strict";
+        user.name = name;
+        user.createAt = Date.now();
+        return user;
+    };
+}
+const createUser = userFactory();
+console.log(createUser("John") === createUser("NotJohn"));
+```
+<details>
+    <summary>**Answer**</summary>
+<p className="m-0 font-bold">Yes, it's the same object.</p>
+<p className="m-0">`userFactory` function it's a buggy implementation of the factory pattern,
+to fix bug new object must be returned. But I think that is great example of the **closure in JavaScript**.</p>
+<p className="m-0 mb-1">When we are comparing object - we are compering just `reference in memory`.</p>
+<Divider />
+</details>
+
+### What is a Hoisting?
+<p className="m-0">Spoiler alert: Word _Hoisting_ is a bit a magic word. JS Engine **does not** _move_ anything to the top of file while parsing it. 
+So, there is no such thing as a _hoisting_...?</p>
+<Image
+    alt="wth_joey"
+    src="/static/images/improve-js-knowledge/wth.gif"
+    className="m-0 w-full h-56 sm:w-3/5 sm:h-72 mx-auto"
+    width={480}
+    height={400}
+/>
+<p className="m-0 mt-1">There is a term called _hoisting_, but it doesn't mean that something changing its position, 
+we will return to the hoisting definition a bit later in this post, but for now, let's consider the next example.</p>
+<br />
+<p className="m-0 font-bold">Which statements are correct?</p>
+- a. Hoisting is a process of moving function and variables to the top of the file
+- b. Variables declared with the `let` and `const` are hoisted
+- c. Variables declared with the `var` keyword are uninitialized
+- d. Hoisting ocurred during execution phase
+- e. `import` declaration are hoisted
+
+<details>
+    <summary>**Answer**</summary>
+<p className="m-0 font-bold">`b` and `e`</p>
+<Divider />
+</details>
+
+<p className="m-0 mt-2">When JS engine starts to work with any `.js` files it makes an environment called the **Execution Context** and it has two phases:</p>
+1. Creation phase
+2. Execution phase
+
+<p className="m-0 font-bold">During the **creation phase** JS engine:</p>
+- Creates a global object: `window/global`
+- Sets up a memory for storing `variables` and `functions`.
+- Stores the variables with the `var` keyword with default value `undefined` and function declarations name with the function reference.
+
+<p className="m-0 font-bold">During the **execution phase**:</p>
+- JavaScript engine executes the code line by line. This includes evaluating and executing statements.
+
+<h4 className="m-0 font-bold">Hoisting examples</h4>
+
+```javascript
+const framework = "Next.js";
+let renderingPattern = "SSR";
+var bestProgrammingLanguage = "HTML😁";
+```
+<p className="m-0">During the **creation phase**, all those variables except `var bestProgrammingLanguage` gonna be `Uninitialized` 
+and only variables with `var` keyword will have initial value as `undefined`, during the **execution phase**, all variables gonna be assigned to corresponding values.</p>
+
+<p className="m-0 mt-2">Please take a look at the one more example below:</p>
+```javascript
+var counter = 1;
+
+function resetCounter() {
+    console.log(counter);   // undefined
+    var counter = 0;
+    console.log(counter);   // 0
+};
+
+resetCounter();
+```
+<p className="m-0">One more example with error:</p>
+```javascript
+let counter = 1;
+
+function resetCounter() {
+    console.log(counter);
+    const counter = 0;
+    console.log(counter);
+};
+
+resetCounter();
+```
+<p className="m-0">As you may guess above code gonna throw an error `Uncaught ReferenceError: Cannot access 'counter' before initialization`.</p>
+<p className="m-0">All JS code runs line by line during execution phase and when we are trying to log `console.log(counter);` 
+JS engine **throws** an error - that counter isn't initialized - this means that `counter` variable is so called _hoisted_ - 
+it already exists in our **Function lexical environment**, otherwise error would be totally different. Check image bellow:</p>
+
+<Image
+    alt="hoist_err"
+    src="/static/images/improve-js-knowledge/hoist_err.png"
+    className="m-0 h-40 sm:h-auto mt-4 mx-auto"
+    width={443}
+    height={204}
+/>
+<p className="m-0 mt-4">So shortly - **Hoisting** it's a process of setting default value to the corresponding declaration during creation phase.</p>
+
+
+### What is a `this` keyword?
+
+<Image
+    webpAnimated
+    alt="this_unbelievable"
+    src="/static/images/improve-js-knowledge/this_unbelievable.webp"
+    className="m-0 w-full h-56 sm:w-3/5 sm:h-72 mb-4 mx-auto"
+    width={370}
+    height={290}
+/>
+
+The value of `this` keyword depends on where we are using it.<br />
+**Global context** - when `this` is used in global context the value of `this` gonna be global object.<br />
+**Function context** - when `this` is used in function context the value of `this` gonna be the `object` on which the function is **invoked**.<br />
+**Arrow function** -  when `this` is used in arrow function the value of `this` gonna be determined by the lexical environment in which an the arrow function is defined.<br />
+**Classes** - when `this` is used in classes the value of `this` gonna be instance of that class.<br />
+**Strict mode** - when `this` is pointing to global object in strict mode the value of `this` gonna be `undefined`.<br />
+
+<h4 className="m-0 font-bold">`this` examples</h4>
+<p className="my-3">Would you be able to answer all of these questions correctly?</p>
+
+```js:#0_this.js showLineNumbers
+function printContext() {
+    console.log(this);
+}
+
+const thatObj = {
+    printContext,
+    printContext_1() {
+        return printContext();
+    },
+    printContext_2() {
+        return thatObj.printContext();
+    },
+};
+
+thatObj.printContext();
+thatObj.printContext_1();
+thatObj.printContext_2();
+```
+
+<details className="mb-4">
+    <summary>**Answer**</summary>
+<p className="m-0 font-bold">`thatObj`, `global`, `thatObj`</p>
+
+- `thatObj.printContext` - printContext function was assigned to the printContext props of `thatObj`, and we called body of this function in the context of the `thatObj`.
+- `thatObj.printContext_1` - is just return result of `printContext` function, so nothing related to `thatObj`.
+- `thatObj.printContext_2` - is the same as `this.printContext()`.
+<Divider />
+</details>
+
+```js:#1_this.js showLineNumbers
+const thatObj_1 = {
+    foo() {
+        console.log(this);
+    },
+    bar: () => {
+        console.log(this);
+    },
+};
+
+const thatObj_2 = {
+    foo: thatObj_1.foo,
+    bar: () => thatObj_1.bar(),
+    baz() {
+        thatObj_1.foo();
+    },
+    bam() {
+        thatObj_1.foo.call(this);
+    },
+    bah() {
+        const nestedF = () => {
+            console.log(this);
+        };
+        nestedF();
+    },
+};
+
+thatObj_2.foo();
+thatObj_2.bar();
+thatObj_2.baz();
+thatObj_2.bam();
+thatObj_2.bah();
+```
+<details className="mb-4">
+    <summary>**Answer**</summary>
+<p className="m-0 font-bold">`thatObj_2`, `global`, `thatObj_1`, `thatObj_2`, `thatObj_2`</p>
+
+- `thatObj_2.bam` - we called `foo` method with `this` of `thatObj_2`. In case of object methods it doesn't matter where object method is defined - it's only matter how it's **invoked**.
+- `thatObj_2.bah` - in this case `this` will be pointing to the parent scope, which is `thatObj_2`.
+<Divider />
+</details>
+ 
+```js:#2_this.js showLineNumbers
+const thatObj = {
+    printContext() {
+        console.log(this);
+    },
+    printContext_1() {
+        function nestedF() {
+            console.log(this);
+        };
+        nestedF.apply(this);
+    },
+};
+
+const { printContext, printContext_1 } = thatObj;
+
+printContext();
+printContext_1();
+thatObj.printContext();
+thatObj.printContext_1();
+```
+
+<details>
+    <summary>**Answer**</summary>
+<p className="m-0 font-bold">`global`, `global`, `thatObj`, `thatObj`</p>
+
+- `printContext()` and `printContext_1()` - when those methods where destructured, the value of `this` was pointed to the context in which these methods were called, 
+in this case global object.
+<Divider />
+</details>
+
+<p className="my-3">Is it possible to iterate through object using `Array.forEach` method?</p>
+<p className="m-0 font-bold">Yes! We can just `call` it😊.</p>
+
+```javascript showLineNumbers
+const arrayLike = {
+  length: 3,
+  0: 2,
+  1: 3,
+  2: 4,
+  3: 5, // ignored by forEach() since length is 3
+};
+
+Array.prototype.forEach.call(arrayLike, (x) => console.log(x)); // 2, 3, 4
+```
+<h4 className="text-center">Thanks for reading, I hope this post was useful and a bit entertaining. See Ya!👋</h4>
+
+<Image
+    webpAnimated
+    alt="thanks_monica"
+    src="/static/images/improve-js-knowledge/thanks_monica.webp"
+    className="m-0 w-full h-56 sm:w-3/5 sm:h-72 mb-4 mx-auto"
+    width={370}
+    height={290}
+/>
