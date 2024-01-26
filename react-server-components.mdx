@@ -1,0 +1,123 @@
+---
+title: TO_DO_React Server Components.
+date: '2024-01-25'
+lastmod: '2024-01-25'
+tags: ['react', 'next.js']
+draft: false
+cssClass: 'lists'
+summary: TO_DO_React Server Components are powerful and extremely important new application architecture of building scalable, smart and complex React applications. This post will cover everything you need to know about RSCs, and how to use Suspense for data fetching.
+---
+
+### Why we should care about it?
+Briefly - it is all about money - it's as simple as it can be. Impact of poor page load performance can lead to bad customer experience,
+customer with a poor internet connection or low-end CPU in its phone can eventually give up and leave your app.
+
+### What is the purpose of RSCs?
+<p className="m-0">React Server Components aimed to:</p>
+- minimize the network waterfall 
+- increase performance by reducing JS bundle size, improving caching, increasing page load speeds 
+- improve SEO
+
+### What are React Server Components?
+React Server Components are application architecture that allows React to be rendered specifically on server environment and after result streamed to the client.
+
+### What are main benefits of RSCs?
+<p className="mb-0 mt-2 font-bold text-gray-200">Data Fetching:</p>
+- RSCs are closer to the data source, a client sends fewer requests to the server to get the data it needs to render, due to this the React Server Components reduce the time and increase performance.
+
+<p className="mb-0 mt-2 font-bold text-gray-200">JavaScript's bundle size:</p>
+- Small JavaScript bundles improve download speeds, memory usage and reduce CPU cost. 
+RSCs are rendered on the server with already populated data and you don’t need to send JS code to the client for those server components.
+
+<p className="mb-0 mt-2 font-bold text-gray-200">First Contentful Paint (FCP):</p>
+- Server generates HTML that can be send immediately to the client, without worrying about downloading, parsing and execution JS.
+
+<p className="mb-0 mt-2 font-bold text-gray-200">Caching:</p>
+- When RSCs fetch some data for to generate this data can be cached on the server, server component itself can be cached between user's requests.
+
+### Rendering Patterns
+Im 2024 we can render content of our apps in many ways. The decision how and where to fetch and render content is key to the performance of an application.
+The good balance is keeping a JS bundle as small as possible and delivering content using as few requests as possible.
+
+<Callout size="md" className="" title="Web Vitals">
+  <ul className="m-0">
+    <li className="m-0">
+      <a href="https://web.dev/articles/ttfb" target="_blank">Time to First Byte</a> `(TTFB)`: the time from firing request to the first bit of content.
+    </li>
+    <li className="m-0">
+      <a href="https://web.dev/articles/fcp" target="_blank">First Contentful Paint</a> `(FCP)`:the time from when the user first navigated 
+      to the page to when any part of the page's content is rendered on the screen
+    </li>
+    <li className="m-0">
+      <a href="https://web.dev/articles/inp" target="_blank">Interaction to Next Paint</a> `(INP)`: measures **the latency** of every tap, click, 
+      or keyboard interaction that user made with the page, the value calculated represent overall responsiveness of the page
+    </li>
+    <li className="m-0">
+      <a href="https://web.dev/articles/tbt" target="_blank">Total Blocking Time</a>`(TBT)`: the amount of time between FCP to the 
+      <a href="https://web.dev/articles/tti" target="_blank">Time to Interactive (TTI)</a> it's a time where the main thread was blocked during page load.
+    </li>
+  </ul>
+</Callout>
+
+<p className="m-0 mt-6 font-bold text-gray-200">Client-side Rendering (CSR)</p>
+
+<p className="m-0">Client-side rendering means rendering pages directly in the browser. On initial page load a single HTML file is generally has **little to no content** until browser fetches the JavaScript and compiles everything. 
+All logic, data fetching, and routing are handled on the client side.
+The this means that more data is passed to the user's device from the server, and that comes with its own set of trade-offs. CSR is perfect for data heavy dashboards, real-time apps and apps that don't care about SEO.</p>
+
+<Info>
+    <p className="m-0"><span className="font-bold text-white">Interactivity:</span> Since it's a SPA the entire app is loaded on the first request (we do not consider `lazy-loading` and `code-splitting` at this moment). 
+As the user navigates by clicking on links, no new request is generated to the server to render these pages.</p>
+</Info>
+
+<Info type='error'>
+    <p className="m-0"><span className="font-bold text-white">Bundle size:</span> While using only CSR when your application grows with the addition of new npm packages that needs to be sended to the client - the amount of JavaScript tends to grow which can have negative effects on a page's FCP, TBT and INP.</p>
+</Info>
+
+<p className="m-0 mt-6 font-bold text-gray-200">Static Site Generation (SSG)</p>
+<p className="m-0">Static rendering happens at build-time, means building a separate HTML page for each `route` ahead of time. SSG apps usually have a faster First Contentful Paint (FCP) compared to the CSR or SSR - because HTML page is already build while user requesting it, 
+and also a lower TBT and INP - assuming that size of JS bundle could be very small compared to other rendering patterns.</p>
+<p className="m-0">If your can pre-render a page ahead of a user's request or at least bigger part of the page (rest could be done using client-side JavaScript) - Static Site Generation (SSG) will be very good for your product.</p>
+
+<Info>
+    <p className="m-0"><span className="font-bold text-white">Caching:</span> Statically generated pages are easy to cache and also SSG can be deployed to several CDNs to take advantage of edge functions. 
+    <span className="font-bold text-white">Edge Functions</span> allow you to serve content from the CDN server closest to the user.</p>
+</Info>
+
+<Info>
+    <p className="m-0"><span className="font-bold text-white">Performance:</span> Statically generated pages are usually have better performance compared to other rendering patterns.</p>
+</Info>
+
+<Info type='error'>
+    <p className="m-0"><span className="font-bold text-white">Dynamic data:</span> Data fetched and pre-populated at build time.
+     If a statically generated page needs dynamic content, or prefetched data needs to be revalidated - this must be done on client-side</p>
+</Info>
+
+
+<p className="m-0 mt-6 font-bold text-gray-200">Server-side Rendering (SSR)</p>
+<p className="m-0">Server-side Rendering (SSR) happens at request-time, SSR generates the full HTML based on user's request. Generating pages on the server takes time, which may result in a higher TTFB.</p>
+
+
+### Limitations of React Server Components
+You can pass data by props from Server Components to the interactive Client Components in the browser.
+
+
+
+Literature:
+This past was create: first of all to make sure that
+https://nextjs.org/docs/app/building-your-application/rendering#building-hybrid-applications
+https://www.plasmic.app/blog/how-react-server-components-work#why-not-just-output-plain-html
+https://blog.logrocket.com/deep-dive-react-fiber/#what-react-fiber
+
+https://v8.dev/blog/cost-of-javascript-2019
+https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023#react-server-components
+https://web.dev/articles/rendering-on-the-web#static_rendering
+https://www.patterns.dev/
+https://nextjs.org/docs/pages/building-your-application/rendering
+https://nextjs.org/docs/app/building-your-application/rendering
+https://nischithbm.medium.com/web-performance-optimizing-the-network-waterfall-8a65df932df6
+https://quickbooks-engineering.intuit.com/web-performance-what-you-dont-know-will-hurt-your-customers-fd6b19b7da07
+https://www.joshwcomeau.com/react/server-components/
+
+
+ 

@@ -3,7 +3,7 @@ title: Error Handling
 date: '2022-12-20'
 tags: ['javascript']
 draft: false
-summary: Error handling is the process of handling the possibility of failure. JavaScript provides error-handling mechanism to catch runtime errors using try-catch-finally block.
+summary: Error handling is the process of handling the possibility of failure. JavaScript provides an error-handling mechanism to catch runtime errors using try-catch-finally block.
 ---
 
 ### What is the output of this code?
@@ -11,7 +11,7 @@ summary: Error handling is the process of handling the possibility of failure. J
 ```javascript
 try {
     setTimeout(() => {
-        // ❌ Error won't be caught inside catch block
+        // ❌ Error won't be caught inside the catch block
         throw new Error("Houston, we have a problem!");
     }, 0);
 } catch (error) {
@@ -26,15 +26,15 @@ Error: Houston, we have a problem!
 ```
 
 #### So why do you think try/catch block didn't catch an Error?
-Exactly, because of at the moment when error was `thrown` **Stack** was already empty.<br />
+Exactly, because at the moment when the error was `thrown` **Stack** was already empty.<br />
 When the `try catch` block is executed, there is no error.<br />
 When the _error_ is `thrown`, there is no `try catch`.<br />
-So how we can fix that? There are dozens of way to solve this, but the most accurate one is to handle error in the place where it can actually be thrown.<br />
+So how we can fix that? There are dozens of ways to solve this, but the most accurate one is to handle error in the place where it can actually be thrown.<br />
 
 ```javascript
 setTimeout(() => {
     try {
-        // Imagine the something went terribly wrong here...
+        // Imagine that something went terribly wrong here...
         // ✅ Error will be caught inside catch block
         throw new Error("Houston, we have a problem!");
 
@@ -87,8 +87,8 @@ class GeneralError extends Error {
     log() {}
 }
 
-// ProductsError class created specifically to generate error
-// related to the products functionality
+// ProductsError class created specifically to generate the error
+// related to the product functionality
 class ProductsError extends GeneralError {
     public type: string = "ProductsErrorType";
     private reason: ProductsErrorReason;
@@ -101,24 +101,24 @@ class ProductsError extends GeneralError {
 }
 
 const fetchProducts = async () => {
-    // Could be an Error that isn't related to the function..
+    // Could be an Error that isn't related to the function...
     try {
-        // Fetch `products` from service, if something was wrong with products throw an error that related to the Products
+        // Fetch `products` from service, if something is wrong with products throw an error that related to the Products
         if (some_problem_with_products) {
             throw new ProductsError(ProductsErrorReason.LOW_CURRENCY);
         }
         // Imagine everything is OK with Products, but there could unknown error:
-        //     - EventBus error, DB error etc.
+        //     - EventBus error, DB error, etc.
         // ....
     } catch (error) {
         // This catch block must handle only errors that are related to the functionality inside `try` block.
-        // So it's always a good practice to check if error is actually `yours`
+        // So it's always a good practice to check if the error is actually `yours`
         if (error instanceof ProductsError) {
             // Handle product error
             // ...
         }
         // If this error is unknown to this block of code throw it further.
-        // And HOPE that someone will caught it 🙂
+        // And HOPE that someone will catch it 🙂
         throw error;
     }
 };

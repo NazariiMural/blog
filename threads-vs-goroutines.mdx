@@ -4,12 +4,12 @@ date: '2024-01-09'
 lastmod: '2024-01-09'
 tags: ['node.js', 'go']
 draft: false
-summary: Superficially look at the worker_threads module in Node.js. In this post we are going to take a look at the most trivial example (counting a big number).
+summary: Superficially look at the worker_threads module in Node.js. In this post, we are going to take a look at the most trivial example (counting a big number).
 ---
 
 ### Node.js model
-Node.js programming model is a **single threaded event loop** that has access to asynchronous operations with the help of libuv. 
-And libuv allows Node.js to perform asynchronous operations that uses native OS interfaces, that are _most of the time_ asynchronous by default. 
+Node.js programming model is a **single-threaded event loop** that has access to asynchronous operations with the help of libuv. 
+And libuv allows Node.js to perform asynchronous operations that use native OS interfaces, which are _most of the time_ asynchronous by default. 
 Node.js programming model is not a product of JavaScript the language itself. It's a product of how `JavaScript` is deployed in popular environments like Node.js and browsers etc.
 
 <div className="plain_image w-full">
@@ -17,18 +17,18 @@ Node.js programming model is not a product of JavaScript the language itself. It
 </div>
 
 ### What are WorkerThreads?
-The `worker_threads` module enables the use of threads that execute JavaScript in parallel. WorkerThreads are more heavyweight than an OS level thread. 
-When you create new Worker using `worker_threads` module Node.js fires up a new JavaScript VM, initializes a new global context, sets up a new heap, starts up a new garbage collector, allocates memory, etc...
+The `worker_threads` module enables the use of threads that execute JavaScript in parallel. WorkerThreads are more heavyweight than an OS-level thread. 
+When you create a new Worker using `worker_threads` module Node.js fires up a new JavaScript VM, initializes a new global context, sets up a new heap, starts up a new garbage collector, allocates memory, etc...
 In Node.js, memory updated in one thread will not be visible to the others (variables set on one side aren't visible to the other).
 To share memory between _main thread_ and _workers_ you can use a `SharedArrayBuffer` to share memory between the threads.
 
 ### When WorkerThreads are useful?
 `worker_threads` is useful when you want to perform **CPU-intensive** tasks in your Node.js application. 
 The idea behind WorkerThreads is that they are useful for getting CPU-intensive code out of your main Event Loop (particularly useful for servers) 
-so you can fire up one or more WorkerThreads to handle CPU-intensive work and keep the main thead Event Loop free and responsive to incoming events/networking and so on.
+so you can fire up one or more WorkerThreads to handle CPU-intensive work and keep the main thread Event Loop free and responsive to incoming events/networking and so on.
 
 ### What is the difference between cluster and WorkerThreads in Node.js?
-`cluster` module as allowing you to run multiple instances of Node.js in **separate processes**, while the `worker_thread` module allows you to run multiple instances of Node.js in the same process.
+`cluster` module allows you to run multiple instances of Node.js in **separate processes**, while the `worker_thread` module allows you to run multiple instances of Node.js in the same process.
 
 ### Useful features of WorkerThreads?
 `SharedArrayBuffer` - lets you share memory between threads (limited to binary data).<br />
@@ -37,8 +37,8 @@ so you can fire up one or more WorkerThreads to handle CPU-intensive work and ke
 `WorkerData` - used to pass startup data to WorkerThread.<br />
 
 ### CPU intensive task
-This example shows us how to divide big job (in this case count to the `1e10` number) into smaller parallel chunk of work. 
-The most simple as strait forward example is to count to some big number. We are going to use Node.js `WorkerThreads` module 
+This example shows us how to divide big jobs (in this case count to the `1e10` number) into smaller parallel chunks of work. 
+The most simple and straightforward example is to count to some big number. We are going to use Node.js `WorkerThreads` module 
 and Go goroutine functions.
 Goroutines provide the simplest way to achieve concurrency and incredible performance baked in Go language. 
 It **isn't** Node.js vs Go comparison, it's a known fact that Node.js is not good at CPU intensive tasks.
@@ -49,8 +49,8 @@ const { Worker, threadId, parentPort, isMainThread } = require("worker_threads")
 /* 
 What data type to use?
     It is always nice to think about memory consumption, 
-    since WorkerThreads are fatty ones we wanna use as less memory as possible,
-    but not in our case, since we are going to manipulate with a big numbers 
+    since WorkerThreads are fatty ones we wanna use as little memory as possible,
+    but not in our case, since we are going to manipulate big numbers
 
     Int8Array   - from -127 to 127      - to small
     Uint8Array  - from 0 to 255         - to small
@@ -174,7 +174,7 @@ func ExampleGoroutine() {
         EXPECTED_RESULT, t1)
 }
 
-// helper func to sums up number in array
+// helper func to sum up numbers in array
 func getSum(arr *[GOROUTINE_AMOUNT]int) int {
 	result := 0
 	for i := 0; i < len(arr); i++ {
@@ -192,7 +192,7 @@ func getSum(arr *[GOROUTINE_AMOUNT]int) int {
     height={427}
 />
 
-And that is it, just import `example` in you `main.go` and run using `go run main.go` command.
+And that is it, just import `example` in your `main.go` and run using `go run main.go` command.
 
 ```go
 package main
@@ -233,7 +233,7 @@ Spec: _i5-1135G7 CPU @ 4.20GHz_ and _16GB of RAM_.
     #3 To count to the 10000000000 took: 2.3754543s
     #4 To count to the 10000000000 took: 2.2233289s
 ```
-As may expect for CPU bound tasks - `Go` may be considered as better solution `Node.js`.
+As may be expected for CPU bound tasks - `Go` may be considered a better solution `Node.js`.
 
 ### Accessing variable in global scope
 While working on Node.js example, I've noticed that frequent accessing of a variable outside of its _local scope_ could have **huge** impact on performance while using V8.
@@ -269,7 +269,7 @@ run();
 console.log(performance.now() - t0); // 3631.19
 ```
 
-Local variables are much much more efficient. As may see using local variable job took: `723.72ms`, but with the global ones same job took: `3631.19ms`, which is **5x** slower.<br />
+Local variables are much much more efficient. As may be seen using local variable job took: `723.72ms`, but with the global ones the same job took: `3631.19ms`, which is **5x** slower.<br />
 But why?
 
 <Image
