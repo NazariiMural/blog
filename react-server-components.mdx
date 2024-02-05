@@ -1,16 +1,16 @@
 ---
-title: TO_DO_React Server Components.
+title: React Server Components
 date: '2024-01-25'
-lastmod: '2024-01-25'
+lastmod: '2024-02-02'
 tags: ['react', 'next.js']
 draft: false
-cssClass: 'lists'
-summary: TO_DO_React Server Components are powerful and extremely important new application architecture of building scalable, smart and complex React applications. This post will cover everything you need to know about RSCs, and how to use Suspense for data fetching.
+cssClasses: ['lists', 'code-scroll']
+summary: React Server Components are powerful and extremely important new application architecture for building scalable, smart, and complex React applications. This post will cover everything you need to know about RSCs, and how to use Suspense for data fetching.
 ---
 
 ### Why we should care about it?
-Briefly - it is all about money - it's as simple as it can be. Impact of poor page load performance can lead to bad customer experience,
-customer with a poor internet connection or low-end CPU in its phone can eventually give up and leave your app.
+Briefly - it is all about money - it's as simple as it can be. The impact of poor page load performance can lead to bad customer experience,
+customer with a poor internet connection or low-end CPU in their phone can eventually give up and leave your app.
 
 ### What is the purpose of RSCs?
 <p className="m-0">React Server Components aimed to:</p>
@@ -19,41 +19,41 @@ customer with a poor internet connection or low-end CPU in its phone can eventua
 - improve SEO
 
 ### What are React Server Components?
-React Server Components are application architecture that allows React to be rendered specifically on server environment and after result streamed to the client.
+React Server Components are application architecture that allows React to be rendered specifically on the server environment and after the result is streamed to the client.
 
-### What are main benefits of RSCs?
+### What are the main benefits of RSCs?
 <p className="mb-0 mt-2 font-bold text-gray-200">Data Fetching:</p>
 - RSCs are closer to the data source, a client sends fewer requests to the server to get the data it needs to render, due to this the React Server Components reduce the time and increase performance.
 
 <p className="mb-0 mt-2 font-bold text-gray-200">JavaScript's bundle size:</p>
-- Small JavaScript bundles improve download speeds, memory usage and reduce CPU cost. 
+- Small JavaScript bundles improve download speeds, and memory usage and reduce CPU cost. 
 RSCs are rendered on the server with already populated data and you don’t need to send JS code to the client for those server components.
 
-<p className="mb-0 mt-2 font-bold text-gray-200">First Contentful Paint (FCP):</p>
-- Server generates HTML that can be send immediately to the client, without worrying about downloading, parsing and execution JS.
+<p className="mb-0 mt-2 font-bold text-gray-200">Largest Contentful Paint (LCP):</p>
+- Server generates HTML that can be sent immediately to the client, without worrying about downloading, parsing, and executing JS.
 
 <p className="mb-0 mt-2 font-bold text-gray-200">Caching:</p>
-- When RSCs fetch some data for to generate this data can be cached on the server, server component itself can be cached between user's requests.
+- When RSCs fetch some data to generate a page this data can be cached on the server, and the server component itself can be cached between user's requests.
 
 ### Rendering Patterns
-Im 2024 we can render content of our apps in many ways. The decision how and where to fetch and render content is key to the performance of an application.
+In 2024 we can render content of our apps in many ways. The decision of how and where to fetch and render content is key to the performance of an application.
 The good balance is keeping a JS bundle as small as possible and delivering content using as few requests as possible.
 
 <Callout size="md" className="" title="Web Vitals">
   <ul className="m-0">
     <li className="m-0">
-      <a href="https://web.dev/articles/ttfb" target="_blank">Time to First Byte</a> `(TTFB)`: the time from firing request to the first bit of content.
+      <a href="https://web.dev/articles/ttfb" target="_blank">Time to First Byte</a> `(TTFB):` the time from firing request to the first bit of content.
     </li>
     <li className="m-0">
-      <a href="https://web.dev/articles/fcp" target="_blank">First Contentful Paint</a> `(FCP)`:the time from when the user first navigated 
-      to the page to when any part of the page's content is rendered on the screen
+      <a href="https://web.dev/articles/lcp" target="_blank">Largest Contentful Paint:</a> `(LCP):` metric reports the render time 
+      of the largest image ot text blok after navigation
     </li>
     <li className="m-0">
-      <a href="https://web.dev/articles/inp" target="_blank">Interaction to Next Paint</a> `(INP)`: measures **the latency** of every tap, click, 
+      <a href="https://web.dev/articles/inp" target="_blank">Interaction to Next Paint</a> `(INP):` measures **the latency** of every tap, click, 
       or keyboard interaction that user made with the page, the value calculated represent overall responsiveness of the page
     </li>
     <li className="m-0">
-      <a href="https://web.dev/articles/tbt" target="_blank">Total Blocking Time</a>`(TBT)`: the amount of time between FCP to the 
+      <a href="https://web.dev/articles/tbt" target="_blank">Total Blocking Time</a>`(TBT):` the amount of time between FCP to the 
       <a href="https://web.dev/articles/tti" target="_blank">Time to Interactive (TTI)</a> it's a time where the main thread was blocked during page load.
     </li>
   </ul>
@@ -61,9 +61,9 @@ The good balance is keeping a JS bundle as small as possible and delivering cont
 
 <p className="m-0 mt-6 font-bold text-gray-200">Client-side Rendering (CSR)</p>
 
-<p className="m-0">Client-side rendering means rendering pages directly in the browser. On initial page load a single HTML file is generally has **little to no content** until browser fetches the JavaScript and compiles everything. 
+<p className="m-0">Client-side rendering means rendering pages directly in the browser. On initial page load, a single HTML file generally has **little to no content** until the browser fetches the JavaScript and compiles everything. 
 All logic, data fetching, and routing are handled on the client side.
-The this means that more data is passed to the user's device from the server, and that comes with its own set of trade-offs. CSR is perfect for data heavy dashboards, real-time apps and apps that don't care about SEO.</p>
+This means that more data is passed to the user's device from the server, and that comes with its own set of trade-offs. CSR is perfect for data-heavy dashboards, real-time apps, and apps that don't care about SEO.</p>
 
 <Info>
     <p className="m-0"><span className="font-bold text-white">Interactivity:</span> Since it's a SPA the entire app is loaded on the first request (we do not consider `lazy-loading` and `code-splitting` at this moment). 
@@ -71,21 +71,31 @@ As the user navigates by clicking on links, no new request is generated to the s
 </Info>
 
 <Info type='error'>
-    <p className="m-0"><span className="font-bold text-white">Bundle size:</span> While using only CSR when your application grows with the addition of new npm packages that needs to be sended to the client - the amount of JavaScript tends to grow which can have negative effects on a page's FCP, TBT and INP.</p>
+    <p className="m-0"><span className="font-bold text-white">Bundle size:</span> While using only CSR when your application grows with the addition 
+    of new npm packages that need to be sent to the client - the amount of JavaScript tends to grow which can have negative effects on a page's LCP, TBT, and INP.</p>
+</Info>
+
+<Info type='error'>
+    <p className="m-0"><span className="font-bold text-white">SEO:</span> Client-Side rendered apps are not SEO friendly.</p>
 </Info>
 
 <p className="m-0 mt-6 font-bold text-gray-200">Static Site Generation (SSG)</p>
-<p className="m-0">Static rendering happens at build-time, means building a separate HTML page for each `route` ahead of time. SSG apps usually have a faster First Contentful Paint (FCP) compared to the CSR or SSR - because HTML page is already build while user requesting it, 
-and also a lower TBT and INP - assuming that size of JS bundle could be very small compared to other rendering patterns.</p>
-<p className="m-0">If your can pre-render a page ahead of a user's request or at least bigger part of the page (rest could be done using client-side JavaScript) - Static Site Generation (SSG) will be very good for your product.</p>
+<p className="m-0">Static rendering happens at build-time, which means building a separate HTML page for each `route` ahead of time. 
+SSG apps usually have a faster Largest Contentful Paint (LCP) compared to the CSR or SSR - because HTML page is already built while user requests it, 
+and also a lower TBT and INP - assuming that the size of the JS bundle could be very small compared to other rendering patterns.</p>
+<p className="m-0">If you can pre-render a page ahead of a user's request or at least a bigger part of the page (the rest could be done using client-side JavaScript) - Static Site Generation (SSG) will be very good for your product.</p>
 
 <Info>
     <p className="m-0"><span className="font-bold text-white">Caching:</span> Statically generated pages are easy to cache and also SSG can be deployed to several CDNs to take advantage of edge functions. 
-    <span className="font-bold text-white">Edge Functions</span> allow you to serve content from the CDN server closest to the user.</p>
+    <span className="font-bold text-white">Edge Functions</span> allows you to serve content from the CDN server closest to the user.</p>
 </Info>
 
 <Info>
-    <p className="m-0"><span className="font-bold text-white">Performance:</span> Statically generated pages are usually have better performance compared to other rendering patterns.</p>
+    <p className="m-0"><span className="font-bold text-white">Performance:</span> Statically generated pages usually have better performance compared to other rendering patterns.</p>
+</Info>
+
+<Info>
+    <p className="m-0"><span className="font-bold text-white">SEO:</span> SSG apps are good with SEO indexing.</p>
 </Info>
 
 <Info type='error'>
@@ -93,31 +103,289 @@ and also a lower TBT and INP - assuming that size of JS bundle could be very sma
      If a statically generated page needs dynamic content, or prefetched data needs to be revalidated - this must be done on client-side</p>
 </Info>
 
-
 <p className="m-0 mt-6 font-bold text-gray-200">Server-side Rendering (SSR)</p>
-<p className="m-0">Server-side Rendering (SSR) happens at request-time, SSR generates the full HTML based on user's request. Generating pages on the server takes time, which may result in a higher TTFB.</p>
+<p className="m-0">SSR happens at request-time, Server-side Rendering allows you to transform React components into HTML and send it to the client. 
+Server sends HTML page to the browser - browser renders HTML page - which is currently non-interactive, to make it interactive the client sends an additional request to fetch the JavaScript bundle to hydrate the components.
+<a href="https://www.joshwcomeau.com/react/the-perils-of-rehydration/" target="_blank">_Hydration_</a> 
+is a technique in which client-side JavaScript converts a static HTML web page, delivered either through static hosting or server-side rendering, into a 
+<a href="https://react.dev/reference/react-dom/client/hydrateRoot" target="_blank">**dynamic web page**</a> by attaching `event handlers` to the HTML elements.</p>
+
+<Info>
+    <p className="m-0"><span className="font-bold text-white">Faster LCP and lower TBT:</span> LCP: The Largest Contentful Paint occurs right after HTML has been parsed and rendered, 
+    it is faster compared to the Client-Side Rendering since with SSR we receive full HTML page rather than blank HTML page with root tag where JS will be rendered. 
+    <span className="font-bold text-white">Lower Total Blocking Time (TBT)</span> - during initial page load, main thread is not busy with parsing and rendering big JS bundle compared to the Client-Side Rendering.</p>
+</Info>
 
 
-### Limitations of React Server Components
-You can pass data by props from Server Components to the interactive Client Components in the browser.
+
+<Info>
+    <p className="m-0"><span className="font-bold text-white">Performance:</span> Statically generated pages usually have better performance compared to other rendering patterns.</p>
+</Info>
+
+<Info>
+    <p className="m-0"><span className="font-bold text-white">SEO:</span> SSG apps are good with SEO indexing.</p>
+</Info>
+
+<Info type='error'>
+    <p className="m-0"><span className="font-bold text-white">Server costs:</span> 
+    To deploy Server-Side rendered app, you gonna need a server or serverless backend, which means higher running costs.</p>
+</Info>
+
+<Info type='error'>
+    <p className="m-0"><span className="font-bold text-white">TTFB:</span> 
+    Time To First Byte is slower than CSR because server has to spend some time to generate HTML page.</p>
+</Info>
+
+### Zero-Bundle-Size with React Server Components
+React Server Components have zero impact on bundle size. You can use, any third-party packages without worrying about have they will impact bundle size of your app.
+
+### RSC vs CSR vs SSR
+To understand better what React Server Components are and how they are compared with Client Side Rendering and Server Side Rendering let's consider the next topics and examples.
+
+<p className="m-0 text-gray-200">RSCs - are not single thing or feature, they **are application architecture**, that are meant to be used with meta frameworks, 
+React team provided API, and frameworks will adopt it.</p>
+
+<p className="m-0 mt-2">These examples demonstrate usage of the RSC, SSR, and CSR, and they were built to demonstrate:</p>
+1. Differences between `Data fetching` patterns
+2. Differences between  `Bundle sizes` of the apps
+
+<p className="m-0 mt-2">Tools that were used:</p>
+- React Server Components are build with <a href="https://nextjs.org/docs/app/building-your-application" target="_blank">Next.js app router</a>.
+- Server-Side Rendering is build with <a href="https://nextjs.org/docs/pages/building-your-application" target="_blank">Next.js page router</a>.
+- Client-Side Rendering is build with <a href="https://vitejs.dev/guide" target="_blank">Vite build tool</a>.
+
+#### CSR, SSR, and RSC data fetching and rendering examples
+<Callout size="md">
+  <p className="m-0">Examples below are built to demonstrate differences between techniques, they are as simple and _dummy_ examples without any SoC or any other principles.</p>
+</Callout>
+
+<p className="mb-0"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/csr_without_libs/src/App.tsx" target="_blank">Client-Side Rendering (CSR)</a></p>
+```tsx {10, 13-15, 29-30} showLineNumbers
+import { useEffect, useState } from "react";
+
+const api = {
+  fetchUsers(): Promise<DBUser[]> {
+    // fetch, handle errors and return DBUser[] | null from API
+  },
+};
+
+export default function MyComponent() {
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      // Fetch users from api
+      const result = await api.fetchUsers();
+
+      // Sort users by name
+      const sorted = result.sort((a, b) => a.name.localeCompare(b.name));
+
+      // Replace dateOfBirth property with age
+      const users = sorted.map((u) => {
+        return {
+          id: u.id,
+          name: u.name,
+          age: new Date().getFullYear() - new Date(u.dateOfBirth).getFullYear() - 1,
+        };
+      });
+
+      // Set user object to state
+      setUsers(users);
+    };
+    fetchUsers();
+  }, []);
+
+  return (
+    <main className="main">
+      <h3>Hello from client-side rendered components (interactive)</h3>
+      {users.length > 0 && (
+        <table>
+          ... Render data here ...
+        </table>
+      )}
+    </main>
+  );
+}
+```
+<p className="mb-0"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/ssr_without_libs/pages/index.tsx" target="_blank">Server-Side Rendering (SSR)</a></p>
+```tsx {7-14} showLineNumbers
+const api = {
+  fetchUsers(): Promise<DBUser[]> {
+    // fetch, handle errors and return DBUser[] | null from API
+  },
+};
+
+// This gets called on every request
+export async function getServerSideProps() {
+  // Fetch data from external API
+  const result = await api.fetchUsers();
+
+  // Pass data to the page via props
+  return { props: { result } };
+}
+
+export default function MyComponent({ result }: { result: DBUser[] }) {
+  // Sort users by name
+  const sorted = result.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Replace dateOfBirth property with age
+  const users = sorted.map((u) => {
+    return {
+      id: u.id,
+      name: u.name,
+      age: new Date().getFullYear() - new Date(u.dateOfBirth).getFullYear() - 1,
+    };
+  });
+
+  return (
+    <main className="main">
+      <h3>Hello from server-side rendered components</h3>
+      <table>
+        ... Render data here ...
+      </table>
+    </main>
+  );
+}
+```
+<p className="mb-0"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/rsc_without_libs/app/page.tsx" target="_blank">React Server Components (RSCs)</a></p>
+```tsx {2,3} showLineNumbers
+export default async function MyComponent() {
+  // Fetch data from DB
+  const result = await db.users.findMany();
+
+  // Sort users by name
+  const sorted = result.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Replace dateOfBirth property with age
+  const users = sorted.map((u) => {
+    return {
+      id: u.id,
+      name: u.name,
+      age: new Date().getFullYear() - new Date(u.dateOfBirth).getFullYear() - 1,
+    };
+  });
+
+  return (
+    <main className="main">
+      <h3>Hello from react-server-components components (non-interactive)</h3>
+      <table>
+        ... Render data here ...
+      </table>
+    </main>
+  );
+}
+```
+
+#### CSR, SSR, and RSC bundle sizes examples
+While using CSR or SSR bundle size tends to grow with the addition of new npm packages that need to be sent to the client. 
+Let's add two **heavy libraries** for our app. Those libraries are added **only for demonstration purposes**, there may be smaller or larger and newer/faster alternatives. 
+```tsx {2, 3, 7, 12, 16} showLineNumbers
+// Add import statements
+import moment from "moment";
+import _ from "lodash";
+
+...
+// Sort users by name with the help of lodash
+const sorted = _.sortBy(result, "name");          // new logic here
+
+...
+// Replace dateOfBirth property with age with the help of moment.js
+const users = sorted.map((u) => {
+  const m = moment(u.dateOfBirth, "MM-DD-YYYY");  // new logic here
+  return {
+    id: u.id,
+    name: u.name,
+    age: moment().diff(m, "years", false),        // new logic here
+  };
+});
+```
+
+<p className="mb-0 text-sm"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/csr_with_libs/src/App.tsx" target="_blank">Client-Side Rendering **(CSR)** **with** additional libraries⬇️</a></p>
+<Image
+    alt="csr_with_libs"
+    src="/static/images/rsc/csr_with_libs.webp"
+    className="m-0 w-full h-56 sm:h-auto mt-4 mx-auto"
+    width={630}
+    height={350}
+/>
+
+<p className="mb-0 text-sm"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/csr_without_libs/src/App.tsx" target="_blank">Client-Side Rendering **(CSR)** **without** libraries⬇️</a></p>
+<Image
+    alt="csr_without_libs"
+    src="/static/images/rsc/csr_without_libs.webp"
+    className="m-0 w-full h-56 sm:h-auto mt-4 mx-auto"
+    width={630}
+    height={350}
+/>
+
+<p className="mb-0 text-sm"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/ssr_with_libs/pages/index.tsx" target="_blank">Server-Side Rendering **(SSR)** **with** additional libraries⬇️</a></p>
+<Image
+    alt="ssr_with_libs"
+    src="/static/images/rsc/ssr_with_libs.webp"
+    className="m-0 w-full h-56 sm:h-auto mt-4 mx-auto"
+    width={630}
+    height={350}
+/>
+
+<p className="mb-0 text-sm"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/ssr_without_libs/pages/index.tsx" target="_blank">Server-Side Rendering **(SSR)** **without** libraries⬇️</a></p>
+<Image
+    alt="ssr_without_libs"
+    src="/static/images/rsc/ssr_without_libs.webp"
+    className="m-0 w-full h-56 sm:h-auto mt-4 mx-auto"
+    width={630}
+    height={350}
+/>
+
+<p className="mb-0 text-sm"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/rsc_with_libs/app/page.tsx" target="_blank">React Server Components **(RSCs)** **with** additional libraries⬇️</a></p>
+<Image
+    alt="rsc_with_libs"
+    src="/static/images/rsc/rsc_with_libs.webp"
+    className="m-0 w-full h-56 sm:h-auto mt-4 mx-auto"
+    width={630}
+    height={350}
+/>
+
+<p className="mb-0 text-sm"><a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs/blob/main/exmples/rsc_without_libs/app/page.tsx" target="_blank">React Server Components **(RSCs)** **without** libraries⬇️</a></p>
+<Image
+    alt="rsc_without_libs"
+    src="/static/images/rsc/rsc_without_libs.webp"
+    className="m-0 w-full h-56 sm:h-auto mt-4 mx-auto"
+    width={630}
+    height={350}
+/>
+
+<p className="my-4 text-md">You can found all the examples in: <a className="font-normal text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs" target="_blank">Github repo</a></p>
+
+<p className="my-4 text-md font-bold">For more information and examples, please check 
+<a className="text-black antialiased dark:text-gray-300" href="https://github.com/NazariiMural/RSCs_with_drizzle_prisma_orms" target="_blank">Github repo</a> 
+with: `Next.js`,`zod`, `PostgresDB`, `drizzle` or `Prisma`, or without ORM.</p>
 
 
 
-Literature:
-This past was create: first of all to make sure that
-https://nextjs.org/docs/app/building-your-application/rendering#building-hybrid-applications
-https://www.plasmic.app/blog/how-react-server-components-work#why-not-just-output-plain-html
-https://blog.logrocket.com/deep-dive-react-fiber/#what-react-fiber
-
-https://v8.dev/blog/cost-of-javascript-2019
-https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023#react-server-components
-https://web.dev/articles/rendering-on-the-web#static_rendering
-https://www.patterns.dev/
-https://nextjs.org/docs/pages/building-your-application/rendering
-https://nextjs.org/docs/app/building-your-application/rendering
-https://nischithbm.medium.com/web-performance-optimizing-the-network-waterfall-8a65df932df6
-https://quickbooks-engineering.intuit.com/web-performance-what-you-dont-know-will-hurt-your-customers-fd6b19b7da07
-https://www.joshwcomeau.com/react/server-components/
+### Conclusions
+1. **Data fetching:**
+As you may see data fetching techniques are very different. To fetch data using Client-Side Rendering components you must fire new requests to the API. To fetch data using React Server Components - you don't have to use components `life-cycle` methods or 
+use `getServerSideProps` - you can just simply execute a function that fetches data directly from **db**, with the help of `React.Suspense` you can add loading states to your Server Components.
+2. **Bundle size:**
+As was described above, bundle size of the Client-Side Rendering app will grow when app grows, even with the help of tree-shaking and code splitting, you still gonna have additional code in your bundle,
+or you gonna have to make new requests to the server to fetch chunks of code.
+3. **SEO:** Better search engine crawling and indexing.
 
 
- 
+### Cite Sources:
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://v8.dev/blog/cost-of-javascript-2019" target="_blank">v8.dev/blog/cost-of-javascript-2019</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://github.com/reactwg/react-18/discussions/37" target="_blank">github.com/reactwg/react-18/discussions/37</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://web.dev/articl" target="_blank">web.dev/articles/lcp</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://nextjs.org/docs/app/building-your-application/rendering#building-hybrid-applications" target="_blank">nextjs.org/docs/app/building-your-application/rendering</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://en.wikipedia.org/wiki/Hydration_(web_development)" target="_blank">en.wikipedia.org/wiki/Hydration_(web_development)</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://www.plasmic.app/blog/how-react-server-components-work#why-not-just-output-plain-html" target="_blank">plasmic.app/blog/how-react-server-components-work</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://blog.logrocket.com/deep-dive-react-fiber/#what-react-fiber" target="_blank">blog.logrocket.com/deep-dive-react-fiber</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023#react-server-components" target="_blank">react.dev/blog/2023/03/22/react-labs</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://web.dev/articles/rendering-on-the-web#static_rendering" target="_blank">web.dev/articles/rendering-on-the-web#static_rendering</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://www.patterns.dev/" target="_blank">patterns.dev</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://nextjs.org/docs/pages/building-your-application/rendering" target="_blank">nextjs.org/docs/pages/building-your-application/rendering</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://nextjs.org/docs/app/building-your-application/rendering" target="_blank">nextjs.org/docs/app/building-your-application/rendering</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://nischithbm.medium.com/web-performance-optimizing-the-network-waterfall-8a65df932df6" target="_blank">nischithbm.medium.com/web</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://quickbooks-engineering.intuit.com/web-performance-what-you-dont-know-will-hurt-your-customers-fd6b19b7da07" target="_blank">quickbooks-engineering</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://www.joshwcomeau.com/react/server-components/" target="_blank">joshwcomeau.com/react/server-components</a><br />
+<a className="font-normal text-sm text-black antialiased dark:text-gray-300" href="https://www.debugbear.com/docs/metrics/largest-contentful-paint" target="_blank">debugbear.com/docs/metrics</a><br />
